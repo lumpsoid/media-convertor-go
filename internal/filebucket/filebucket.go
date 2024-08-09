@@ -91,7 +91,7 @@ func FileBucketFromLogFile(pathToLog string) *FileBucket {
 	log.Infof("Read %d lines from log file: %s", len(lines), pathToLog)
 
   // TODO refator to something more meaningfull
-	confirm, err := utils.ConfirmPrompt("With proceeding, logfile would be deleted. It's already read, but if you will cancel this run, this information will be lost. Do you want to proceed?")
+	confirm, err := utils.ConfirmPrompt("With proceeding, logfile will be deleted. It's already read, but if you will cancel this run, this information will be lost. Do you want to proceed?")
 	if err != nil {
 		log.Errorf("Can't get confirmation from user")
 	}
