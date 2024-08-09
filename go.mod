@@ -1,4 +1,4 @@
-module github.com/lumpsoid/media-convertor-go
+module mediaconvertor
 
 go 1.21.7
 
