@@ -6,6 +6,7 @@ import (
 	"mediaconvertor/internal/utils"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
@@ -71,7 +72,14 @@ func RunFFmpeg(args ...string) error {
 }
 
 func GetVideoDimensions(filePath string) (width, height int) {
-	cmd := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filePath)
+	cmd := exec.Command(
+		"ffprobe",
+		"-v", "error",
+		"-select_streams", "v:0",
+		"-show_entries", "stream=width,height",
+		"-of", "csv=s=x:p=0",
+		filePath,
+	)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatalf("Can't get video dimensions of the file: %s. error=%v", filePath, err)
@@ -89,10 +97,9 @@ func GetVideoAspectRation(width, height int) AspectRation {
 }
 
 func rerenderVideo(
-	logfilePath string,
-	inputPath string,
-	outputPath string,
-	minDimension int,
+  params *parameters.Parameters,
+  inputPath string,
+  outputPath string,
 	width int,
 	height int,
 ) error {
@@ -103,21 +110,37 @@ func rerenderVideo(
 	switch aspectRation {
 
 	case Vertical:
-		scaleOption := fmt.Sprintf("scale=%d:%d", minDimension, -1)
-		err = RunFFmpeg("-loglevel", "quiet", "-i", inputPath, "-map_metadata", "0", "-c:v", "h264_nvenc", "-vf", scaleOption, "-r", "30", "-y", outputPath)
+		scaleOption := fmt.Sprintf("scale=%d:%d", params.VideoMinDimension, -1)
+		err = RunFFmpeg(
+			"-loglevel", "quiet",
+			"-i", inputPath,
+			"-map_metadata", "0",
+			//"-c:v", "h264_nvenc",  // because user decides which format to choose
+			"-vf", scaleOption,
+			"-r", strconv.Itoa(params.VideoTargetFps),
+			"-y", outputPath,
+		)
 
 	case Horizontal:
-		scaleOption := fmt.Sprintf("scale=%d:%d", -1, minDimension)
-		err = RunFFmpeg("-loglevel", "quiet", "-i", inputPath, "-map_metadata", "0", "-c:v", "h264_nvenc", "-vf", scaleOption, "-r", "30", "-y", outputPath)
+		scaleOption := fmt.Sprintf("scale=%d:%d", -1, params.VideoMinDimension)
+		err = RunFFmpeg(
+			"-loglevel", "quiet",
+			"-i", inputPath,
+			"-map_metadata", "0",
+			// "-c:v", "h264_nvenc",
+			"-vf", scaleOption,
+			"-r", strconv.Itoa(params.VideoTargetFps),
+			"-y", outputPath,
+		)
 	}
 	if err != nil {
 		log.Errorf("Error while processing video: %s", inputPath)
-		errAppend := utils.AppendToLogfile(logfilePath, inputPath)
+		errAppend := utils.AppendToLogfile(params.LogFilePath, inputPath)
     // TODO if appending resulted in error is there a gracefull end?
 		if errAppend != nil {
 			log.Errorf(
 				"Error while appending to the logfile: %s filepath: %s",
-				logfilePath,
+				params.LogFilePath,
 				inputPath,
 			)
       return errAppend
@@ -134,21 +157,24 @@ func processVideo(
 ) error {
 	var err error
 
-	outputFilePath := utils.GenOutputPath(params.OutputVideoDir, uuid.NewString(), "mp4")
+	outputFilePath := utils.GenOutputPath(
+		params.OutputVideoDir,
+		uuid.NewString(),
+		params.VideoTargetFormat,
+	)
 	width, height := GetVideoDimensions(inputFilePath)
 
 	// don't need to process
 	// dimension is smaller than provided parameter MinVideoDimension
-	if width < params.MinVideoDimension || height < params.MinVideoDimension {
+	if width < params.VideoMinDimension || height < params.VideoMinDimension {
 		utils.CopyFile(inputFilePath, outputFilePath)
 		return nil
 	}
 
 	err = rerenderVideo(
-		params.LogFilePath,
+		params,
 		inputFilePath,
 		outputFilePath,
-		params.MinVideoDimension,
 		width,
 		height,
 	)

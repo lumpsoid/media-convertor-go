@@ -2,13 +2,13 @@ package processing
 
 import (
 	"os/exec"
+	"strings"
 
 	"github.com/charmbracelet/log"
 )
 
 
-func RunExiftool(msg string, args ...string) {
-	log.Infof(msg)
+func RunExiftool(args ...string) {
 	cmd := exec.Command("exiftool", args...)
 	err := cmd.Run()
 	if err != nil {
@@ -16,13 +16,13 @@ func RunExiftool(msg string, args ...string) {
 	}
 }
 
-func PostWithExiftool(outputImageDir string, outputVideoDir string)  {
+func PostWithExiftool(imageExt string, videoExt string, outputImageDir string, outputVideoDir string)  {
 	// -r -- recursive
-	RunExiftool("Run exiftool for images", "-ext", "AVIF", "-FileName<${FileModifyDate}_${ImageSize}%-c.${FileTypeExtension}", "-d", "IMG_%Y-%m-%d_%H-%M-%S", outputImageDir)
-	RunExiftool("Run exiftool for images, trying CreateDate", "-ext", "AVIF", "-FileName<${CreateDate}_${ImageSize}%-c.${FileTypeExtension}", "-d", "IMG_%Y-%m-%d_%H-%M-%S", outputImageDir)
-	RunExiftool("Run exiftool for images, trying DateCreated", "-ext", "AVIF", "-FileName<${DateCreated}_${ImageSize}%-c.${FileTypeExtension}", "-d", "IMG_%Y-%m-%d_%H-%M-%S", outputImageDir)
+	RunExiftool("-ext", strings.ToUpper(imageExt), "-FileName<${FileModifyDate}_${ImageSize}%-c.${FileTypeExtension}", "-d", "IMG_%Y-%m-%d_%H-%M-%S", outputImageDir)
+	RunExiftool("-ext", strings.ToUpper(imageExt), "-FileName<${CreateDate}_${ImageSize}%-c.${FileTypeExtension}", "-d", "IMG_%Y-%m-%d_%H-%M-%S", outputImageDir)
+	RunExiftool("-ext", strings.ToUpper(imageExt), "-FileName<${DateCreated}_${ImageSize}%-c.${FileTypeExtension}", "-d", "IMG_%Y-%m-%d_%H-%M-%S", outputImageDir)
 
-	RunExiftool("Run exiftool for videos", "-ext", "MP4", "-FileName<${FileModifyDate}_${ImageSize}%-c.${FileTypeExtension}", "-d", "MOV_%Y-%m-%d_%H-%M-%S", outputVideoDir)
-	RunExiftool("Run exiftool for videos, trying CreateDate", "-ext", "MP4", "-FileName<${CreateDate}_${ImageSize}%-c.${FileTypeExtension}", "-d", "MOV_%Y-%m-%d_%H-%M-%S", outputVideoDir)
+	RunExiftool("-ext", strings.ToUpper(videoExt), "-FileName<${FileModifyDate}_${ImageSize}%-c.${FileTypeExtension}", "-d", "MOV_%Y-%m-%d_%H-%M-%S", outputVideoDir)
+	RunExiftool("-ext", strings.ToUpper(videoExt), "-FileName<${CreateDate}_${ImageSize}%-c.${FileTypeExtension}", "-d", "MOV_%Y-%m-%d_%H-%M-%S", outputVideoDir)
   
 }

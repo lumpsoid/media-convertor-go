@@ -10,34 +10,94 @@ import (
 )
 
 type Parameters struct {
-	InputDir          string
-	OutputVideoDir    string
-	OutputImageDir    string
-	Extensions        []string
-	MinVideoDimension int
-  OverrideOutputDir bool
-	FromLogFile       string
-	LogFilePath       string
+	InputDir           string
+	OutputVideoDir     string
+	OutputImageDir     string
+	Extensions         []string
+	VideoMinDimension  int
+	VideoTargetFps     int
+	VideoTargetFormat  string
+	ImageTargetFormat  string
+	ImageTargetQuality int
+	OverrideOutputDir  bool
+	FromLogFile        string
+	LogFilePath        string
 }
 
 func Parse() *Parameters {
 	var params Parameters
 	var extensions string
 
-	// Define and parse command-line parameters
-	// flag.StringVar(&params.OutputDir, "output_dir", "", "Output directory")
-	flag.StringVar(&params.InputDir, "input_dir", "", "Input directory")
-	flag.StringVar(&extensions, "ext", "", "File extension to process. In format: 'jpg,png,mov,mp4'")
-	flag.StringVar(&params.LogFilePath, "logfile", "", "Logfile for media file paths in case of a error")
-	flag.StringVar(&params.FromLogFile, "from_logfile", "", "Process files from previous failed run.")
-	flag.IntVar(&params.MinVideoDimension, "min_video_dim", 0, "Minimum video dimension convert to.")
-	flag.BoolVar(&params.OverrideOutputDir, "override_output_dir", false, "Override output dir ('-input_dir' + 'img' or 'mov').")
-	// TODO add target extensions for video and photo
+	// Define flags for each parameter
+	flag.StringVar(
+		&params.InputDir,
+		"inputDir",
+		"",
+		"Directory containing input files. Must be flat",
+	)
+	flag.StringVar(
+		&extensions,
+		"extensions",
+		"",
+		"Comma-separated list of file extensions to process (e.g., 'jpg,png,mov,mp4')",
+	)
+	flag.IntVar(
+		&params.VideoMinDimension,
+		"videoMinDimension",
+		0,
+		"Minimum dimension of the video to process",
+	)
+	flag.IntVar(
+		&params.VideoTargetFps,
+		"videoTargetFps",
+		0,
+		"Target frames per second for video processing",
+	)
+	flag.StringVar(
+		&params.VideoTargetFormat,
+		"videoTargetFormat",
+		"",
+		"Target format for processed videos (e.g., 'mp4')",
+	)
+	flag.StringVar(
+		&params.ImageTargetFormat,
+		"imageTargetFormat",
+		"",
+		"Target format for processed images (e.g., 'jpg', 'png')",
+	)
+	flag.IntVar(
+		&params.ImageTargetQuality,
+		"imageTargetQuality",
+		0,
+		"Quality of the processed images (e.g., 80, 57)",
+	)
+	flag.BoolVar(
+		&params.OverrideOutputDir,
+		"overrideOutputDir",
+		false,
+		"Whether to override the output directory",
+	)
+	flag.StringVar(
+		&params.FromLogFile,
+		"fromLogFile",
+		"",
+		"Path to the log file with file paths from a previous run",
+	)
+	flag.StringVar(
+		&params.LogFilePath,
+		"logFilePath",
+		"",
+		"Path to the log file for recording processing details",
+	) // TODO add target extensions for video and photo
 	// just copy them if they appear in stream
 	// TODO add flag for forcefully process appeared files which extension same as target
 	flag.Parse()
 
 	params.Extensions = processExtensions(extensions)
+
+  params.InputDir = utils.ExpandHomeDir(params.InputDir)
+  params.LogFilePath = utils.ExpandHomeDir(params.LogFilePath)
+  params.FromLogFile = utils.ExpandHomeDir(params.FromLogFile)
 
 	params.OutputVideoDir = path.Join(params.InputDir, "mov")
 	params.OutputImageDir = path.Join(params.InputDir, "img")
@@ -56,32 +116,43 @@ func processExtensions(extensionsString string) []string {
 
 func Check(params *Parameters) {
 	if params.InputDir == "" {
-		log.Fatal("Please provide an input dir using the -input_dir flag.")
-	}
-	if params.LogFilePath == "" {
-		log.Fatal("Please provide a path to the logfile using the -logfile flag. In case of an error in process of converting, path to the media file would be recorded in it, then you will be able to try process them again after first run using -from_logfile flag")
-	}
-  if params.FromLogFile != "" && params.LogFilePath != "" && params.LogFilePath == params.FromLogFile {
-		log.Fatal("Please use different logfiles with -from_logfile and -logfile")
-  }
-	if utils.IsPathExist(params.LogFilePath) {
-    yes, err := utils.ConfirmPrompt("Provided logfile path with '-logfile' already exists. Want to override?")
-    if err != nil {
-      log.Fatal("Error occured while read prompt respose")
-    }
-    if !yes {
-      log.Fatal("Please choose different path for the '-logfile' flag")
-    }
+		log.Fatal("Please provide an input dir using the -inputDir flag")
 	}
 	if !utils.IsPathExist(params.InputDir) {
-		log.Fatal("Provided dir with '-input_dir' doesn't exist")
+		log.Fatal("Provided dir with '-inputDir' doesn't exist")
 	}
-	if params.MinVideoDimension == 0 {
-		log.Fatal("Please provide a minimum video dimension using the -min_video_dim flag.")
+	if params.LogFilePath == "" {
+		log.Fatal("Please provide a path to the logfile using the -logFilePath flag")
 	}
-
+	if params.FromLogFile != "" && params.LogFilePath != "" && params.LogFilePath == params.FromLogFile {
+		log.Fatal("Please use different logfiles with -from_logfile and -logFilePath")
+	}
+	if utils.IsPathExist(params.LogFilePath) {
+		yes, err := utils.ConfirmPrompt("Provided logfile path with '-logFilePath' already exists. Want to override?")
+		if err != nil {
+			log.Fatal("Error occured while read prompt respose")
+		}
+		if !yes {
+			log.Fatal("Please choose different path for the '-logFilePath' flag")
+		}
+	}
+	if params.VideoMinDimension <= 0 {
+		log.Fatal("Please provide a minimum video dimension using the -min_video_dim flag")
+	}
+	if params.VideoTargetFps <= 0 {
+		log.Fatal("Please provide a video target fps using the -videoTargetFps flag")
+	}
+	if params.VideoTargetFormat == "" {
+		log.Fatal("Please provide a video target format using the -videoTargetFormat flag")
+	}
+	if params.ImageTargetFormat == "" {
+		log.Fatal("Please provide a image target format using the -imageTargetFormat flag")
+	}
+	if params.ImageTargetQuality <= 0 {
+		log.Fatal("Please provide a image target quality using the -imageTargetQuality flag")
+	}
 	if len(params.Extensions) == 0 {
-		log.Fatal("Please provide an extensions using the -ext flag. Like: 'jpg,png,mov,mp4'")
+		log.Fatal("Please provide an extensions using the -extensions flag. Like: 'jpg,png,mov,mp4'")
 	}
 
 	utils.CheckAndClearDir(
@@ -94,4 +165,9 @@ func Check(params *Parameters) {
 		params.OverrideOutputDir,
 		"Output video",
 	)
+}
+
+func LoggingCheckedParams(params *Parameters)  {
+  log.Infof("Image parameters: target format = '%s', target quality = '%d'", params.ImageTargetFormat, params.ImageTargetQuality)
+  log.Infof("Video parameters: target format = '%s', target fps = '%d', min dimension = '%d'", params.VideoTargetFormat, params.VideoTargetFps, params.VideoMinDimension)
 }

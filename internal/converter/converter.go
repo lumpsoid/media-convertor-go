@@ -36,10 +36,14 @@ func SetUpFiles(params *parameters.Parameters) (*stats.Stats, *filebucket.FileBu
 }
 
 func Initialize() (*stats.Stats, *parameters.Parameters, *filebucket.FileBucket) {
-	CheckProgramAvailability("exiftool")
 	// Parse parameters
 	p := parameters.Parse()
 	parameters.Check(p)
+
+	CheckProgramAvailability("exiftool")
+	CheckProgramAvailability("ffmpeg")
+
+  parameters.LoggingCheckedParams(p)
 
 	s, f := SetUpFiles(p)
 	return s, p, f
@@ -51,10 +55,15 @@ func Run(statistics *stats.Stats, params *parameters.Parameters, fileBucket *fil
 }
 
 func StructureFolderLayout(
+  imageExt string,
+  videoExt string,
 	outputImageDir string,
 	outputVideoDir string,
 ) {
+  log.Info("Structuring output folder")
 	processing.PostWithExiftool(
+    imageExt,
+    videoExt,
 		outputImageDir,
 		outputVideoDir,
 	)

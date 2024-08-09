@@ -21,6 +21,8 @@ func main() {
 	)
 
   converter.StructureFolderLayout(
+    params.ImageTargetFormat,
+    params.VideoTargetFormat,
 		params.OutputImageDir,
 		params.OutputVideoDir,
   )

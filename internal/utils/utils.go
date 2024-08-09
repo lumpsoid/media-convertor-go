@@ -6,7 +6,10 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/user"
 	"path"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -81,8 +84,29 @@ func GenOutputPath(outDir, baseName, ext string) string {
 	return path.Join(outDir, filename)
 }
 
+func ExpandHomeDir(path string) string {
+	homeDir, err := os.UserHomeDir()
+  
+	if err != nil {
+		// Fallback if HOME environment variable is not set
+    curUser, err := user.Current()
+    if err != nil {
+      log.Fatalf("Can't resolve home directory. Check path: %s", path)
+    } else {
+      homeDir = filepath.Join("/home/", curUser.Username)
+    }
+	}
+
+	if strings.HasPrefix(path, "~/") {
+		return filepath.Join(homeDir,path[1:])
+	}
+
+	return path
+}
+
 func IsPathExist(dirPath string) bool {
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+  dirPathAbs := ExpandHomeDir(dirPath)
+	if _, err := os.Stat(dirPathAbs); os.IsNotExist(err) {
 		log.Debug("Directory don't exist: %s", dirPath)
 		return false
 	}
