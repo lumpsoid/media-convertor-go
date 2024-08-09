@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/charmbracelet/log"
 )
@@ -50,7 +51,8 @@ func ReadLines(filePath string) ([]string, error) {
 }
 
 func GetFileType(extension string) FileType {
-	switch extension {
+  extString := strings.ToLower(extension)
+	switch extString {
 	case ".jpeg", ".jpg", ".png", ".heic", ".webp", ".avif":
 		return Image
 	case ".mov", ".mp4", ".avi", ".mkv":
