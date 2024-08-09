@@ -16,16 +16,19 @@ func genFile(t *testing.T, filePath string) {
 	}
 }
 
-func genTestFolder() (time.Time, string) {
+func genTestFolder(t *testing.T) (time.Time, string) {
 	timeNow := time.Now()
-	folderPath := fmt.Sprintf("test/%d", timeNow.UnixNano())
-	CreateFolder(folderPath)
+	folderPath := fmt.Sprintf("../../test/%d", timeNow.UnixNano())
+  err := CreateFolder(folderPath)
+  if err != nil {
+    t.Fatal(err)
+  }
 	return timeNow, folderPath
 }
 
 func TestGetModificationTime(t *testing.T) {
 	// set up
-	timeNow, folderPath := genTestFolder()
+	timeNow, folderPath := genTestFolder(t)
 	fileName := "data.txt"
 	filePath := path.Join(folderPath, fileName)
 	genFile(t, filePath)
@@ -47,7 +50,7 @@ func TestGetModificationTime(t *testing.T) {
 }
 
 func TestPathExist(t *testing.T) {
-	_, folderPath := genTestFolder()
+	_, folderPath := genTestFolder(t)
 	fileName := "test.999"
 	filePath := path.Join(folderPath, fileName)
 	genFile(t, filePath)
@@ -73,7 +76,7 @@ func TestGenOutputPath(t *testing.T) {
 
 func TestCopyFile(t *testing.T) {
 	// set up
-	_, folderPath := genTestFolder()
+	_, folderPath := genTestFolder(t)
 	filePath := GenOutputPath(folderPath, "test", "file")
 	outputPath := GenOutputPath(folderPath, "testTEST", "file")
 	genFile(t, filePath)
@@ -135,7 +138,7 @@ func TestGetFilesFromDir(t *testing.T) {
 
 func TestAppendToFileAsync(t *testing.T) {
 	// set up
-	_, folderPath := genTestFolder()
+	_, folderPath := genTestFolder(t)
 	fileName := "TEST"
 	fileExt := "text"
 	filePath := GenOutputPath(folderPath, fileName, fileExt)
@@ -167,7 +170,7 @@ func TestAppendToFileAsync(t *testing.T) {
 
 func TestSpecGetModificationTime(t *testing.T) {
 	// set up
-	_, folderPath := genTestFolder()
+	_, folderPath := genTestFolder(t)
 	filePathOne := GenOutputPath(folderPath, "test1", "txt")
 	filePathTwo := GenOutputPath(folderPath, "test2", "txt")
 	genFile(t, filePathOne)
@@ -190,4 +193,14 @@ func TestSpecGetModificationTime(t *testing.T) {
 
 	// clean up
 	os.RemoveAll(folderPath)
+}
+
+func TestGetDiskSpace(t *testing.T) {
+	free, total, used, err  := GetDiskSpace("/")
+  // Convert bytes to megabytes
+	const bytesInMB = 1024 * 1024
+  freeMB := free / bytesInMB
+  totalMB := total / bytesInMB
+  usedMB := used / bytesInMB
+  t.Fatal(freeMB, totalMB, usedMB, err)
 }

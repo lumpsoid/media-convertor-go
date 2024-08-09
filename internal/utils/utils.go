@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
+	"golang.org/x/sys/unix"
 )
 
 func GetModificationTime(filePath string) (time.Time, error) {
@@ -236,4 +237,20 @@ func RemoveEmptyDir(dirPath string) {
 		log.Errorf("Can't delete dir: %s. Error: %s", dirPath, err)
     return
 	}
+}
+
+func GetDiskSpace(path string) (free, total, used uint64, err error) {
+	var stat unix.Statfs_t
+
+	err = unix.Statfs(path, &stat)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	// Convert values to bytes
+	free = stat.Bavail * uint64(stat.Bsize)
+	total = stat.Blocks * uint64(stat.Bsize)
+	used = (stat.Blocks - stat.Bfree) * uint64(stat.Bsize)
+
+	return free, total, used, nil
 }
