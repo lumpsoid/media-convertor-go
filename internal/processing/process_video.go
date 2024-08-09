@@ -97,9 +97,9 @@ func GetVideoAspectRation(width, height int) AspectRation {
 }
 
 func rerenderVideo(
-  params *parameters.Parameters,
-  inputPath string,
-  outputPath string,
+	params *parameters.Parameters,
+	inputPath string,
+	outputPath string,
 	width int,
 	height int,
 ) error {
@@ -110,7 +110,7 @@ func rerenderVideo(
 	switch aspectRation {
 
 	case Vertical:
-		scaleOption := fmt.Sprintf("scale=%d:%d", params.VideoMinDimension, -1)
+		scaleOption := fmt.Sprintf("scale=%d:%d", params.VideoMinDimension, -2)
 		err = RunFFmpeg(
 			"-loglevel", "quiet",
 			"-i", inputPath,
@@ -122,7 +122,7 @@ func rerenderVideo(
 		)
 
 	case Horizontal:
-		scaleOption := fmt.Sprintf("scale=%d:%d", -1, params.VideoMinDimension)
+		scaleOption := fmt.Sprintf("scale=%d:%d", -2, params.VideoMinDimension)
 		err = RunFFmpeg(
 			"-loglevel", "quiet",
 			"-i", inputPath,
@@ -136,17 +136,17 @@ func rerenderVideo(
 	if err != nil {
 		log.Errorf("Error while processing video: %s", inputPath)
 		errAppend := utils.AppendToLogfile(params.LogFilePath, inputPath)
-    // TODO if appending resulted in error is there a gracefull end?
+		// TODO if appending resulted in error is there a gracefull end?
 		if errAppend != nil {
 			log.Errorf(
 				"Error while appending to the logfile: %s filepath: %s",
 				params.LogFilePath,
 				inputPath,
 			)
-      return errAppend
+			return errAppend
 		}
 	}
-  return nil
+	return nil
 }
 
 // Can't be async, always sync
@@ -179,21 +179,21 @@ func processVideo(
 		height,
 	)
 	if err != nil {
-    // TODO probably should remove processed file?
-    return err
+		// TODO probably should remove processed file?
+		return err
 	}
 
 	err = utils.TransferModificationTime(inputFilePath, outputFilePath)
 	if err != nil {
-    // TODO probably should remove processed file?
-    // try luck next time?
+		// TODO probably should remove processed file?
+		// try luck next time?
 		log.Warnf(
 			"Error while transfering modification time from '%s' to '%s'",
 			inputFilePath,
 			outputFilePath,
 		)
-    return err
+		return err
 	}
 
-  return nil
+	return nil
 }
