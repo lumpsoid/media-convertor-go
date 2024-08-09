@@ -20,12 +20,18 @@ func main() {
 		params.OutputVideoDir,
 	)
 
-  converter.StructureFolderLayout(
-    params.ImageTargetFormat,
-    params.VideoTargetFormat,
+	converter.StructureOutputLayout(
+		params.ImageTargetFormat,
+		params.VideoTargetFormat,
 		params.OutputImageDir,
 		params.OutputVideoDir,
-  )
+		params.OutputStructured,
+	)
+
+	converter.CleaningUp(
+		params.OutputImageDir,
+		params.OutputVideoDir,
+	)
 
 	stats.Process(statistics)
 }

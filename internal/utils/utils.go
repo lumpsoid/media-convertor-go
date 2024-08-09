@@ -86,26 +86,26 @@ func GenOutputPath(outDir, baseName, ext string) string {
 
 func ExpandHomeDir(path string) string {
 	homeDir, err := os.UserHomeDir()
-  
+
 	if err != nil {
 		// Fallback if HOME environment variable is not set
-    curUser, err := user.Current()
-    if err != nil {
-      log.Fatalf("Can't resolve home directory. Check path: %s", path)
-    } else {
-      homeDir = filepath.Join("/home/", curUser.Username)
-    }
+		curUser, err := user.Current()
+		if err != nil {
+			log.Fatalf("Can't resolve home directory. Check path: %s", path)
+		} else {
+			homeDir = filepath.Join("/home/", curUser.Username)
+		}
 	}
 
 	if strings.HasPrefix(path, "~/") {
-		return filepath.Join(homeDir,path[1:])
+		return filepath.Join(homeDir, path[1:])
 	}
 
 	return path
 }
 
 func IsPathExist(dirPath string) bool {
-  dirPathAbs := ExpandHomeDir(dirPath)
+	dirPathAbs := ExpandHomeDir(dirPath)
 	if _, err := os.Stat(dirPathAbs); os.IsNotExist(err) {
 		log.Debug("Directory don't exist: %s", dirPath)
 		return false
@@ -127,9 +127,9 @@ func GetFilesFromDir(dirPath string) ([]fs.DirEntry, error) {
 }
 
 func AppendToLogfile(logfilePath string, mediaFilepath string) error {
-  if len(mediaFilepath) == 0 {
-    return errors.New("Media filepath is empty")
-  }
+	if len(mediaFilepath) == 0 {
+		return errors.New("Media filepath is empty")
+	}
 	if mediaFilepath[len(mediaFilepath)-1] != '\n' {
 		mediaFilepath += "\n"
 	}
@@ -141,10 +141,10 @@ func AppendToLogfile(logfilePath string, mediaFilepath string) error {
 	defer file.Close()
 
 	_, err = file.WriteString(mediaFilepath)
-  if err != nil {
-    return err
-  }
-  return nil
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func AppendToFileAsync(filePath string, content string, wg *sync.WaitGroup, resultCh chan error) {
@@ -218,5 +218,22 @@ func CheckAndClearDir(dirPath string, overrideOutputDir bool, messagePrefix stri
 	} else {
 		log.Infof("Move files from: '%s' and try again.", dirPath)
 		os.Exit(1)
+	}
+}
+
+func RemoveEmptyDir(dirPath string) {
+	files, err := GetFilesFromDir(dirPath)
+	if err != nil {
+		log.Errorf("On '%s' check: %v", dirPath, err)
+		return
+	}
+	if len(files) != 0 {
+		log.Errorf("Something left in '%s'. Proceeding...", dirPath)
+		return
+	}
+	err = os.Remove(dirPath)
+	if err != nil {
+		log.Errorf("Can't delete dir: %s. Error: %s", dirPath, err)
+    return
 	}
 }

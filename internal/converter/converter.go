@@ -6,6 +6,7 @@ import (
 	"mediaconvertor/internal/parameters"
 	"mediaconvertor/internal/processing"
 	"mediaconvertor/internal/stats"
+	"mediaconvertor/internal/utils"
 	"os/exec"
 
 	"github.com/charmbracelet/log"
@@ -43,7 +44,7 @@ func Initialize() (*stats.Stats, *parameters.Parameters, *filebucket.FileBucket)
 	CheckProgramAvailability("exiftool")
 	CheckProgramAvailability("ffmpeg")
 
-  parameters.LoggingCheckedParams(p)
+	parameters.LoggingCheckedParams(p)
 
 	s, f := SetUpFiles(p)
 	return s, p, f
@@ -54,17 +55,25 @@ func Run(statistics *stats.Stats, params *parameters.Parameters, fileBucket *fil
 	return
 }
 
-func StructureFolderLayout(
-  imageExt string,
-  videoExt string,
+func StructureOutputLayout(
+	imageExt string,
+	videoExt string,
 	outputImageDir string,
 	outputVideoDir string,
+	outputStructuredDir string,
 ) {
-  log.Info("Structuring output folder")
+	log.Info("Structuring output folder")
 	processing.PostWithExiftool(
-    imageExt,
-    videoExt,
+		imageExt,
+		videoExt,
 		outputImageDir,
 		outputVideoDir,
+		outputStructuredDir,
 	)
+}
+
+func CleaningUp(outputImageDir string, outputVideoDir string) {
+  log.Info("Cleaning")
+  utils.RemoveEmptyDir(outputImageDir)
+  utils.RemoveEmptyDir(outputVideoDir)
 }

@@ -13,6 +13,7 @@ type Parameters struct {
 	InputDir           string
 	OutputVideoDir     string
 	OutputImageDir     string
+	OutputStructured   string
 	Extensions         []string
 	VideoMinDimension  int
 	VideoTargetFps     int
@@ -95,12 +96,13 @@ func Parse() *Parameters {
 
 	params.Extensions = processExtensions(extensions)
 
-  params.InputDir = utils.ExpandHomeDir(params.InputDir)
-  params.LogFilePath = utils.ExpandHomeDir(params.LogFilePath)
-  params.FromLogFile = utils.ExpandHomeDir(params.FromLogFile)
+	params.InputDir = utils.ExpandHomeDir(params.InputDir)
+	params.LogFilePath = utils.ExpandHomeDir(params.LogFilePath)
+	params.FromLogFile = utils.ExpandHomeDir(params.FromLogFile)
 
 	params.OutputVideoDir = path.Join(params.InputDir, "mov")
 	params.OutputImageDir = path.Join(params.InputDir, "img")
+	params.OutputStructured = path.Join(params.InputDir, "structured")
 
 	return &params
 }
@@ -165,9 +167,14 @@ func Check(params *Parameters) {
 		params.OverrideOutputDir,
 		"Output video",
 	)
+	utils.CheckAndClearDir(
+		params.OutputStructured,
+		params.OverrideOutputDir,
+		"Output structured",
+	)
 }
 
-func LoggingCheckedParams(params *Parameters)  {
-  log.Infof("Image parameters: target format = '%s', target quality = '%d'", params.ImageTargetFormat, params.ImageTargetQuality)
-  log.Infof("Video parameters: target format = '%s', target fps = '%d', min dimension = '%d'", params.VideoTargetFormat, params.VideoTargetFps, params.VideoMinDimension)
+func LoggingCheckedParams(params *Parameters) {
+	log.Infof("Image parameters: target format = '%s', target quality = '%d'", params.ImageTargetFormat, params.ImageTargetQuality)
+	log.Infof("Video parameters: target format = '%s', target fps = '%d', min dimension = '%d'", params.VideoTargetFormat, params.VideoTargetFps, params.VideoMinDimension)
 }
