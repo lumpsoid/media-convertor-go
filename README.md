@@ -29,7 +29,7 @@ chmod +x ./process_media
 
 ## How to Use:
 
-```sh
+```
 ./process_media -h
   -extensions string
         Comma-separated list of file extensions to process (e.g., 'jpg,png,mov,mp4')
