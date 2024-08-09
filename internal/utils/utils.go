@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -99,6 +100,27 @@ func GetFilesFromDir(dirPath string) ([]fs.DirEntry, error) {
 		return nil, err
 	}
 	return files, nil
+}
+
+func AppendToLogfile(logfilePath string, mediaFilepath string) error {
+  if len(mediaFilepath) == 0 {
+    return errors.New("Media filepath is empty")
+  }
+	if mediaFilepath[len(mediaFilepath)-1] != '\n' {
+		mediaFilepath += "\n"
+	}
+
+	file, err := os.OpenFile(logfilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(mediaFilepath)
+  if err != nil {
+    return err
+  }
+  return nil
 }
 
 func AppendToFileAsync(filePath string, content string, wg *sync.WaitGroup, resultCh chan error) {

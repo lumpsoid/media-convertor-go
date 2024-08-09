@@ -6,8 +6,6 @@ import (
 	"mediaconvertor/internal/utils"
 	"os"
 	"os/exec"
-	"sync"
-	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
@@ -90,36 +88,86 @@ func GetVideoAspectRation(width, height int) AspectRation {
 	return Vertical
 }
 
-func Video(
-	filePath string,
-	params *parameters.Parameters,
-	wg *sync.WaitGroup,
-	resultCh chan error,
-) {
-	outputFile := utils.GenOutputPath(params.OutputVideoDir, uuid.NewString(), "mp4")
-	width, height := GetVideoDimensions(filePath)
-	if width < params.MinVideoDimension || height < params.MinVideoDimension {
-		utils.CopyFile(filePath, outputFile)
-	}
+func rerenderVideo(
+	logfilePath string,
+	inputPath string,
+	outputPath string,
+	minDimension int,
+	width int,
+	height int,
+) error {
+	var err error
 
 	aspectRation := GetVideoAspectRation(width, height)
-	modTime, err := utils.GetModificationTime(filePath)
-	if err != nil {
-		log.Errorf("Can't get modification time of the file: %s", filePath)
-	}
 
 	switch aspectRation {
+
 	case Vertical:
-		scaleOption := fmt.Sprintf("scale=%d:%d", params.MinVideoDimension, -1)
-		err = RunFFmpeg("-loglevel", "quiet", "-i", filePath, "-map_metadata", "0", "-c:v", "h264_nvenc", "-vf", scaleOption, "-r", "30", "-y", outputFile)
+		scaleOption := fmt.Sprintf("scale=%d:%d", minDimension, -1)
+		err = RunFFmpeg("-loglevel", "quiet", "-i", inputPath, "-map_metadata", "0", "-c:v", "h264_nvenc", "-vf", scaleOption, "-r", "30", "-y", outputPath)
+
 	case Horizontal:
-		scaleOption := fmt.Sprintf("scale=%d:%d", -1, params.MinVideoDimension)
-		err = RunFFmpeg("-loglevel", "quiet", "-i", filePath, "-map_metadata", "0", "-c:v", "h264_nvenc", "-vf", scaleOption, "-r", "30", "-y", outputFile)
+		scaleOption := fmt.Sprintf("scale=%d:%d", -1, minDimension)
+		err = RunFFmpeg("-loglevel", "quiet", "-i", inputPath, "-map_metadata", "0", "-c:v", "h264_nvenc", "-vf", scaleOption, "-r", "30", "-y", outputPath)
 	}
 	if err != nil {
-		log.Errorf("Error while processing video: %s", filePath)
-		wg.Add(1)
-		go utils.AppendToFileAsync(params.LogFilePath, filePath, wg, resultCh)
+		log.Errorf("Error while processing video: %s", inputPath)
+		errAppend := utils.AppendToLogfile(logfilePath, inputPath)
+    // TODO if appending resulted in error is there a gracefull end?
+		if errAppend != nil {
+			log.Errorf(
+				"Error while appending to the logfile: %s filepath: %s",
+				logfilePath,
+				inputPath,
+			)
+      return errAppend
+		}
 	}
-	os.Chtimes(outputFile, time.Time{}, modTime)
+  return nil
+}
+
+// Can't be async, always sync
+// ffmpeg running on all cors by default?
+func processVideo(
+	params *parameters.Parameters,
+	inputFilePath string,
+) error {
+	var err error
+
+	outputFilePath := utils.GenOutputPath(params.OutputVideoDir, uuid.NewString(), "mp4")
+	width, height := GetVideoDimensions(inputFilePath)
+
+	// don't need to process
+	// dimension is smaller than provided parameter MinVideoDimension
+	if width < params.MinVideoDimension || height < params.MinVideoDimension {
+		utils.CopyFile(inputFilePath, outputFilePath)
+		return nil
+	}
+
+	err = rerenderVideo(
+		params.LogFilePath,
+		inputFilePath,
+		outputFilePath,
+		params.MinVideoDimension,
+		width,
+		height,
+	)
+	if err != nil {
+    // TODO probably should remove processed file?
+    return err
+	}
+
+	err = utils.TransferModificationTime(inputFilePath, outputFilePath)
+	if err != nil {
+    // TODO probably should remove processed file?
+    // try luck next time?
+		log.Warnf(
+			"Error while transfering modification time from '%s' to '%s'",
+			inputFilePath,
+			outputFilePath,
+		)
+    return err
+	}
+
+  return nil
 }

@@ -5,7 +5,6 @@ import (
 	"mediaconvertor/internal/filebucket"
 	"mediaconvertor/internal/parameters"
 	"mediaconvertor/internal/stats"
-	"sync"
 
 	"github.com/charmbracelet/log"
 )
@@ -16,40 +15,41 @@ func Files(
 	stats *stats.Stats,
 ) {
 	log.Info("Starting processing files")
-	var wg sync.WaitGroup
-	resultCh := make(chan error, 1)
 
 	counterLoop := 0
 	counterMax := stats.PreCountImage + stats.PreCountVideo
 
 	for ext, files := range fileBucket.Files {
+		var errInLoop error
 		fileType := filebucket.GetFileType(ext)
 		switch fileType {
 		case filebucket.Image:
 			for _, filePath := range files {
 				counterLoop++
 				fmt.Printf("\r%d/%d", counterLoop, counterMax)
-				Image(filePath, params, &wg, resultCh)
+				errInLoop = processImage(params, filePath)
 			}
 		case filebucket.Video:
 			for _, filePath := range files {
 				counterLoop++
 				fmt.Printf("\r%d/%d", counterLoop, counterMax)
-				Video(filePath, params, &wg, resultCh)
+				errInLoop = processVideo(params, filePath)
 			}
+		}
+		if errInLoop != nil {
+			// TODO error in two cases
+			// failed to append to the file
+			// failed to migrate time modification from input file to output file
+			// probably better to just delete output file
+			// and try luck in appending to the log file second time
+			// maybe create class for handling writing to the log file?
+			// then we can queue into it
+			// if will be able to async images
+			// then we can just unload this task to him
+			// and don't think too much here
+			// make him running in a separate goroutine
+			log.Error("Failed in most ugly way")
 		}
 	}
 	fmt.Print("\n")
-	go func() {
-		wg.Wait()
-		close(resultCh)
-	}()
-	// Process results from goroutines
-	for err := range resultCh {
-		if err != nil {
-			log.Errorf("Error appending to file: %v\n", err)
-		} else {
-			log.Debug("File append successful")
-		}
-	}
 }

@@ -5,31 +5,35 @@ import (
 	"mediaconvertor/internal/utils"
 	"os"
 	"os/exec"
-	"sync"
 
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
 )
 
-func Image(
-	filePath string,
+func processImage(
 	params *parameters.Parameters,
-	wg *sync.WaitGroup,
-	resultCh chan error,
-) {
+	inputFilepath string,
+) error {
 	outputPath := utils.GenOutputPath(params.OutputImageDir, uuid.NewString(), "avif")
 
-	cmd := exec.Command("magick", "-quality", "57", filePath, outputPath)
+	cmd := exec.Command("magick", "-quality", "57", inputFilepath, outputPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
 	err := cmd.Run()
 	if err != nil {
-		log.Errorf("Error while processing image: %s", filePath)
-		wg.Add(1)
-		go utils.AppendToFileAsync(params.LogFilePath, filePath, wg, resultCh)
+		log.Errorf("Error while processing image: %s", inputFilepath)
+    errAppend := utils.AppendToLogfile(params.LogFilePath, inputFilepath)
+    if errAppend != nil {
+      return err
+    }
 	}
-	err = utils.TransferModificationTime(filePath, outputPath)
+
+	err = utils.TransferModificationTime(inputFilepath, outputPath)
 	if err != nil {
-		log.Warnf("Error while transfering modification time from: '%s' to: '%s'", filePath, outputPath)
+		log.Warnf("Error while transfering modification time from: '%s' to: '%s'", inputFilepath, outputPath)
+    return err
 	}
+
+  return nil
 }
