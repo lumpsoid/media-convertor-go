@@ -4,9 +4,9 @@ This tool helps you batch convert images and videos into smaller file sizes for 
 
 ## Features:
 
-- Supports image formats: ImageMagick (hardcoded to AVIF output with 57 quality settings)
-- Supports video formats: ffmpeg (hardcoded to MP4 output at 30 fps)
-- Reduces file size while maintaining good quality
+- Supports image formats: check ImageMagick 
+- Supports video formats: check ffmpeg
+- Safely converting files
 - Organizes processed files into separate folders for images and videos
 - Renames processed files with creation date and resolution information
 
@@ -22,42 +22,48 @@ This tool helps you batch convert images and videos into smaller file sizes for 
 ```sh
 git clone https://github.com/lumpsoid/media-convertor-go.git
 cd media-convertor-go
-go build -o process_media
+go build -o process_media ./cmd/process-media/main.go
 chmod +x ./process_media
 ./process_media -h
 ```
 
 ## How to Use:
 
-```
+```sh
 ./process_media -h
-Usage of ./process_media:
-  -ext string
-    	File extension to process. In format: 'jpg,png,mov,mp4'
-  -from_log_file string
-    	Process files from previous failed run.
-  -input_dir string
-    	Input directory
-  -min_video_dim int
-    	Minimum video dimension convert to.
-  -no_clean
-    	Clean output directory before processing.
+  -extensions string
+        Comma-separated list of file extensions to process (e.g., 'jpg,png,mov,mp4')
+  -fromLogFile string
+        Path to the log file with file paths from a previous run
+  -imageTargetFormat string
+        Target format for processed images (e.g., 'jpg', 'png')
+  -imageTargetQuality int
+        Quality of the processed images (e.g., 80, 57)
+  -inputDir string
+        Directory containing input files. Must be flat
+  -logFilePath string
+        Path to the log file for recording processing details
+  -overrideOutputDir
+        Whether to override the output directory
+  -videoMinDimension int
+        Minimum dimension of the video to process
+  -videoTargetFormat string
+        Target format for processed videos (e.g., 'mp4')
+  -videoTargetFps int
+        Target frames per second for video processing
 ```
 
 ## Output:
 
 Two new folders will be created within the source folder:
-  - img - Contains compressed and renamed images.
-  - mov - Contains compressed and renamed videos.
+  - img - Contains compressed and renamed images, will be deleted at the end.
+  - mov - Contains compressed and renamed videos, will be deleted at the end.
+  - structured - Containing all media with Year/Month/Files structure.
 
 Filenames will be formatted as IMG/MOV_DateOfCreation_Resolution.EXT (e.g., 	
-IMG_2018-01-21_13-11-59_342x480.avif or MOV_2017-12-20_18-57-17_853x480.mp4).
+`IMG_2018-01-21_13-11-59_342x480.avif` or `MOV_2017-12-20_18-57-17_853x480.mp4`).
 
-If a file fails to convert during the conversion process, the path to the file will be written to `.processError<unix time>`, after which you can run cli with the parameters `-from_log_file=<path/to/file> -no_clean` to try to convert only the failed files.
-
-## Notes:
-
-This cli currently uses hardcoded settings for output formats (AVIF for images and MP4 at 30 fps for videos). You can modify the `process_image.go` and `process_video.go` to customize these settings if needed.
+If a file fails to convert during the conversion process, the path to the file will be written to `logfile` specified with `-logFilePath` flag, after which you can run CLI with the parameters `-fromLogFilePath=<path/to/file>` to try to convert only the failed files.
 
 ## Disclaimer:
 
