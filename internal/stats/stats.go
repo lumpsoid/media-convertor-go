@@ -50,6 +50,15 @@ func CountPost(
 	stats.PostCountVideo = len(postVideoFiles)
 }
 
+func CountFilesRecursive(dirPath string) int {
+  counter, err := utils.CountFiles(dirPath)
+  if err != nil {
+    log.Errorf("Error while counting files: %v", err)
+    return 0
+  }
+  return counter
+}
+
 func calculateTimeElapsed(startTime time.Time) {
 	endTime := time.Now()
 	log.Infof("Time elapsed: %s", endTime.Sub(startTime))

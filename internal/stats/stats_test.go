@@ -46,7 +46,7 @@ func TestPopulateFileBucket(t *testing.T) {
 	fileBucket := filebucket.FileBucketFromExtensions([]string{"jpg"})
 
 	// test
-	filebucket.PopulateFileBucket(&params, fileBucket)
+	filebucket.PopulateFileBucket(fileBucket, params.InputDir)
 
 	if len(fileBucket.Files[".jpg"]) != 2 {
 		t.Errorf("Expected 2, got %d", len(fileBucket.Files[".jpg"]))
@@ -54,7 +54,7 @@ func TestPopulateFileBucket(t *testing.T) {
 
 	// test
 	fileBucket = filebucket.FileBucketFromExtensions([]string{"jpg", "png"})
-	filebucket.PopulateFileBucket(&params, fileBucket)
+	filebucket.PopulateFileBucket(fileBucket, params.InputDir)
 	if len(fileBucket.Files[".jpg"]) != 2 {
 		t.Errorf("Expected 2, got %d", len(fileBucket.Files[".jpg"]))
 	}
@@ -80,7 +80,7 @@ func TestStatCalcFromFileBucket(t *testing.T) {
 	}
 	params := parameters.Parameters{InputDir: "test"}
 	fileBucket := filebucket.FileBucketFromExtensions([]string{"jpg", "png"})
-	filebucket.PopulateFileBucket(&params, fileBucket)
+	filebucket.PopulateFileBucket(fileBucket, params.InputDir)
 
 	// test
 	stats := FromFileBucket(fileBucket)

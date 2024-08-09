@@ -5,8 +5,10 @@ import (
 	"mediaconvertor/internal/filebucket"
 	"mediaconvertor/internal/parameters"
 	"mediaconvertor/internal/stats"
+	"mediaconvertor/internal/utils"
 
 	"github.com/charmbracelet/log"
+	"github.com/google/uuid"
 )
 
 func Files(
@@ -49,6 +51,30 @@ func Files(
 			// and don't think too much here
 			// make him running in a separate goroutine
 			log.Error("Failed in most ugly way")
+		}
+	}
+	fmt.Print("\n")
+}
+
+func CopyFiles(
+	fileBucket *filebucket.FileBucket,
+	stats *stats.Stats,
+	outputStructured string,
+) {
+
+	counterLoop := 0
+	counterMax := stats.PreCountImage + stats.PreCountVideo
+
+	for ext, files := range fileBucket.Files {
+		for _, filePath := range files {
+			counterLoop++
+			fmt.Printf("\r%d/%d", counterLoop, counterMax)
+			outputPath := utils.GenOutputPath(
+				outputStructured,
+				uuid.NewString(),
+				ext,
+			)
+			utils.CopyFile(filePath, outputPath)
 		}
 	}
 	fmt.Print("\n")

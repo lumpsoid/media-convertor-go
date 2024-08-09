@@ -3,7 +3,6 @@ package filebucket
 import (
 	"bufio"
 	"fmt"
-	"mediaconvertor/internal/parameters"
 	"mediaconvertor/internal/utils"
 	"os"
 	"path"
@@ -119,10 +118,10 @@ func FileBucketFromLogFile(pathToLog string) *FileBucket {
 	return fileBucket
 }
 
-func PopulateFileBucket(params *parameters.Parameters, fileBucket *FileBucket) {
-	files, err := utils.GetFilesFromDir(params.InputDir)
+func PopulateFileBucket(fileBucket *FileBucket, inputDir string) {
+	files, err := utils.GetFilesFromDir(inputDir)
 	if err != nil {
-		log.Errorf("Can't get files from input folder: %s", params.InputDir)
+		log.Errorf("Can't get files from input folder: %s", inputDir)
 		os.Exit(1)
 	}
 	for _, file := range files {
@@ -130,7 +129,7 @@ func PopulateFileBucket(params *parameters.Parameters, fileBucket *FileBucket) {
 		if _, ok := fileBucket.Files[ext]; ok {
 			fileBucket.Files[ext] = append(
 				fileBucket.Files[ext],
-				path.Join(params.InputDir, file.Name()),
+				path.Join(inputDir, file.Name()),
 			)
 		}
 	}

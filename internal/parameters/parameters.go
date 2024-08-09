@@ -89,9 +89,8 @@ func Parse() *Parameters {
 		"logFilePath",
 		"",
 		"Path to the log file for recording processing details",
-	) // TODO add target extensions for video and photo
-	// just copy them if they appear in stream
-	// TODO add flag for forcefully process appeared files which extension same as target
+	) 
+
 	flag.Parse()
 
 	params.Extensions = processExtensions(extensions)

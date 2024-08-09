@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"os/user"
 	"path"
 	"path/filepath"
@@ -16,6 +17,18 @@ import (
 	"github.com/charmbracelet/log"
 	"golang.org/x/sys/unix"
 )
+
+// Check if specified program is available in the system
+//
+// Will call os.Fatal(1) on failure
+func CheckProgramAvailability(program string) {
+	// Run "which" command to check program availability
+	cmd := exec.Command("which", program)
+	// Execute the command
+	if err := cmd.Run(); err != nil {
+		log.Fatal(fmt.Sprintf("Program %s is not present on the system", program))
+	}
+}
 
 func GetModificationTime(filePath string) (time.Time, error) {
 	fileInfo, err := os.Stat(filePath)
@@ -127,6 +140,33 @@ func GetFilesFromDir(dirPath string) ([]fs.DirEntry, error) {
 	return files, nil
 }
 
+// CountFiles recursively counts the number of files in the specified directory and its subdirectories.
+func CountFiles(dirPath string) (int, error) {
+	counter := 0
+
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		return -1, err
+	}
+
+	// Iterate through each file and directory
+	for _, file := range files {
+		fullPath := filepath.Join(dirPath, file.Name())
+
+		if file.IsDir() {
+			// Recursively count files in the subdirectory
+			subDirCount, err := CountFiles(fullPath)
+			if err != nil {
+				return -1, err
+			}
+			counter += subDirCount
+		} else {
+			counter++
+		}
+	}
+
+	return counter, nil
+}
 func AppendToLogfile(logfilePath string, mediaFilepath string) error {
 	if len(mediaFilepath) == 0 {
 		return errors.New("Media filepath is empty")

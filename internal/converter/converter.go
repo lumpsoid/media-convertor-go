@@ -1,28 +1,14 @@
 package converter
 
 import (
-	"fmt"
 	"mediaconvertor/internal/filebucket"
 	"mediaconvertor/internal/parameters"
 	"mediaconvertor/internal/processing"
 	"mediaconvertor/internal/stats"
 	"mediaconvertor/internal/utils"
-	"os/exec"
 
 	"github.com/charmbracelet/log"
 )
-
-// Check if specified program is available in the system
-//
-// Will call os.Fatal(1) on failure
-func CheckProgramAvailability(program string) {
-	// Run "which" command to check program availability
-	cmd := exec.Command("which", program)
-	// Execute the command
-	if err := cmd.Run(); err != nil {
-		log.Fatal(fmt.Sprintf("Program %s is not present on the system", program))
-	}
-}
 
 func SetUpFiles(params *parameters.Parameters) (*stats.Stats, *filebucket.FileBucket) {
 	if len(params.FromLogFile) > 0 {
@@ -31,7 +17,7 @@ func SetUpFiles(params *parameters.Parameters) (*stats.Stats, *filebucket.FileBu
 		return &stats, fileBucket
 	}
 	fileBucket := filebucket.FileBucketFromExtensions(params.Extensions)
-	filebucket.PopulateFileBucket(params, fileBucket)
+	filebucket.PopulateFileBucket(fileBucket, params.InputDir)
 	stats := stats.FromFileBucket(fileBucket)
 	return &stats, fileBucket
 }
@@ -41,8 +27,8 @@ func Initialize() (*stats.Stats, *parameters.Parameters, *filebucket.FileBucket)
 	p := parameters.Parse()
 	parameters.Check(p)
 
-	CheckProgramAvailability("exiftool")
-	CheckProgramAvailability("ffmpeg")
+	utils.CheckProgramAvailability("exiftool")
+	utils.CheckProgramAvailability("ffmpeg")
 
 	parameters.LoggingCheckedParams(p)
 

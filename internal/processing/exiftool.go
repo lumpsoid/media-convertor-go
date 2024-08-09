@@ -103,3 +103,37 @@ func PostWithExiftool(imageExt string, videoExt string, outputImageDir string, o
 	processVideos(videoExt, outputVideoDir, outputStructuredDir)
 
 }
+
+func OrginizeWithExiftool(outputStructuredDir string) {
+  // renaming
+	dateFormat := "IMG_%Y-%m-%d_%H-%M-%S"
+	dateTags := []string{
+		"FileModifyDate",
+		"CreateDate",
+		"DateCreated",
+	}
+	for _, dateTag := range dateTags {
+		RunExiftool(
+			fmt.Sprint("-FileName<${", dateTag, "}_${ImageSize}%-c.${FileTypeExtension}"),
+			"-d", dateFormat,
+			outputStructuredDir,
+		)
+	}
+  // structuring
+  //
+  // probably, because there is not -r recursive tag
+  // it should be okay
+	directoryStructure := "%Y/%m"
+	dateTagsForStructuring := []string{
+		"DateCreated",
+		"CreateDate",
+		"FileModifyDate",
+	}
+	for _, dateTag := range dateTagsForStructuring {
+		RunExiftool(
+			fmt.Sprint("-Directory<", outputStructuredDir, "/${", dateTag, "}"),
+			"-d", directoryStructure,
+			outputStructuredDir,
+		)
+	}
+}
