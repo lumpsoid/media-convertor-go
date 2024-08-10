@@ -25,6 +25,12 @@ func SetUpFiles(params *parameters.Orginize) (*stats.Stats, *filebucket.FileBuck
 
 	stats := stats.FromFileBucket(fileBucket)
 
+	utils.CheckAndClearDir(
+		params.OutputStructured,
+		params.OverrideOutputDir,
+		"Output structured",
+	)
+
 	return &stats, fileBucket
 }
 

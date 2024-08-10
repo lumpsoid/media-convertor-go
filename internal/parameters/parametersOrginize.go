@@ -116,10 +116,4 @@ func CheckForOrginizing(params *Orginize) {
 	if len(params.Extensions) == 0 {
 		log.Fatal("Please provide an extensions using the -extensions flag. Like: 'jpg,png,mov,mp4'")
 	}
-
-	utils.CheckAndClearDir(
-		params.OutputStructured,
-		params.OverrideOutputDir,
-		"Output structured",
-	)
 }
