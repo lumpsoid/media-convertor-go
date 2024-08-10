@@ -157,27 +157,6 @@ func Check(params *Parameters) {
 	if len(params.Extensions) == 0 {
 		log.Fatal("Please provide an extensions using the -extensions flag. Like: 'jpg,png,mov,mp4'")
 	}
-
-	utils.CheckAndClearDir(
-		params.OutputImageDir,
-		params.OverrideOutputDir,
-		"Output image",
-	)
-	utils.CheckAndClearDir(
-		params.OutputVideoDir,
-		params.OverrideOutputDir,
-		"Output video",
-	)
-	utils.CheckAndClearDir(
-		params.OutputUndefiendDir,
-		params.OverrideOutputDir,
-		"Output undefiend",
-	)
-	utils.CheckAndClearDir(
-		params.OutputStructured,
-		params.OverrideOutputDir,
-		"Output structured",
-	)
 }
 
 func LoggingCheckedParams(params *Parameters) {

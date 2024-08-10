@@ -17,6 +17,28 @@ func SetUpFiles(params *parameters.Parameters) (*stats.Stats, *filebucket.FileBu
 	fileBucket := filebucket.FileBucketFromExtensions(params.Extensions)
 	filebucket.PopulateFileBucket(fileBucket, params.InputDir)
 	stats := stats.FromFileBucket(fileBucket)
+
+	utils.CheckAndClearDir(
+		params.OutputImageDir,
+		params.OverrideOutputDir,
+		"Output image",
+	)
+	utils.CheckAndClearDir(
+		params.OutputVideoDir,
+		params.OverrideOutputDir,
+		"Output video",
+	)
+	utils.CheckAndClearDir(
+		params.OutputUndefiendDir,
+		params.OverrideOutputDir,
+		"Output undefiend",
+	)
+	utils.CheckAndClearDir(
+		params.OutputStructured,
+		params.OverrideOutputDir,
+		"Output structured",
+	)
+
 	return &stats, fileBucket
 }
 
