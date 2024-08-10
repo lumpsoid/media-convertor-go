@@ -2,12 +2,11 @@ package filebucket
 
 import (
 	"bufio"
-	"fmt"
+	"io/fs"
 	"mediaconvertor/internal/utils"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/charmbracelet/log"
 )
@@ -23,6 +22,19 @@ const (
 	Video     FileType = 1
 	Undefiend FileType = 2
 )
+
+func (fb *FileBucket) InputFile(inputDir string, dirEntry fs.DirEntry) {
+	ext := utils.GetFileExtension(dirEntry.Name())
+
+	// if extension is in the bucket
+	// then we append it for processing
+	if _, ok := fb.Files[ext]; ok {
+		fb.Files[ext] = append(
+			fb.Files[ext],
+			path.Join(inputDir, dirEntry.Name()),
+		)
+	}
+}
 
 func ReadLines(filePath string) ([]string, error) {
 	// Open the file for reading
@@ -50,11 +62,10 @@ func ReadLines(filePath string) ([]string, error) {
 }
 
 func GetFileType(extension string) FileType {
-  extString := strings.ToLower(extension)
-	switch extString {
-	case ".jpeg", ".jpg", ".png", ".heic", ".webp", ".avif":
+	switch extension {
+	case "jpeg", "jpg", "png", "heic", "webp", "avif", "jxl":
 		return Image
-	case ".mov", ".mp4", ".avi", ".mkv":
+	case "mov", "mp4", "avi", "mkv":
 		return Video
 	default:
 		log.Infof("Don't know what to do with: %s", extension)
@@ -67,13 +78,12 @@ func FileBucketFromExtensions(extensions []string) *FileBucket {
 		Files: make(map[string][]string),
 	}
 	for _, ext := range extensions {
-		extWithDot := fmt.Sprintf(".%s", ext)
-		fileType := GetFileType(extWithDot)
+		fileType := GetFileType(ext)
 		switch fileType {
 		case Image:
-			fileBucket.Files[extWithDot] = []string{}
+			fileBucket.Files[ext] = []string{}
 		case Video:
-			fileBucket.Files[extWithDot] = []string{}
+			fileBucket.Files[ext] = []string{}
 		}
 	}
 	return fileBucket
@@ -91,7 +101,7 @@ func FileBucketFromLogFile(pathToLog string) *FileBucket {
 	}
 	log.Infof("Read %d lines from log file: %s", len(lines), pathToLog)
 
-  // TODO refator to something more meaningfull
+	// TODO refator to something more meaningfull
 	confirm, err := utils.ConfirmPrompt("With proceeding, logfile will be deleted. It's already read, but if you will cancel this run, this information will be lost. Do you want to proceed?")
 	if err != nil {
 		log.Errorf("Can't get confirmation from user")
@@ -118,6 +128,25 @@ func FileBucketFromLogFile(pathToLog string) *FileBucket {
 	return fileBucket
 }
 
+func PopulateFileBuketRecursive(fb *FileBucket, inputDir string) {
+	files, err := os.ReadDir(inputDir)
+	if err != nil {
+		log.Fatal("Error reading dir: ", err)
+	}
+
+	// Iterate through each file and directory
+	for _, file := range files {
+		fullPath := filepath.Join(inputDir, file.Name())
+
+		if file.IsDir() {
+			PopulateFileBuketRecursive(fb, fullPath)
+		} else {
+			fb.InputFile(inputDir, file)
+		}
+	}
+	return 
+}
+
 func PopulateFileBucket(fileBucket *FileBucket, inputDir string) {
 	files, err := utils.GetFilesFromDir(inputDir)
 	if err != nil {
@@ -125,13 +154,7 @@ func PopulateFileBucket(fileBucket *FileBucket, inputDir string) {
 		os.Exit(1)
 	}
 	for _, file := range files {
-		ext := filepath.Ext(file.Name())
-		if _, ok := fileBucket.Files[ext]; ok {
-			fileBucket.Files[ext] = append(
-				fileBucket.Files[ext],
-				path.Join(inputDir, file.Name()),
-			)
-		}
+		fileBucket.InputFile(inputDir, file)
 	}
 }
 
@@ -158,5 +181,3 @@ func PopulateFileBucket(fileBucket *FileBucket, inputDir string) {
 // 	}
 // 	return files
 // }
-
-

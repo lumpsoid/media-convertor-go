@@ -9,12 +9,15 @@ import (
 )
 
 type Orginize struct {
-	InputDir          string
-	OutputStructured  string
-	Extensions        []string
-	OverrideOutputDir bool
-	FromLogFile       string
-	LogFilePath       string
+	InputDir            string
+	OutputStructured    string
+	Extensions          []string
+	OverrideOutputDir   bool
+	FromLogFile         string
+	LogFilePath         string
+	PopulateRecursively bool
+	SaveFileName        bool
+	NoProcessing        bool
 }
 
 func ParseForOrginizing() *Orginize {
@@ -34,6 +37,24 @@ func ParseForOrginizing() *Orginize {
 		false,
 		"Whether to override the output directory",
 	)
+	flag.BoolVar(
+		&params.SaveFileName,
+		"saveFileName",
+		false,
+		"Don't process file name into date pattern",
+	)
+	flag.BoolVar(
+		&params.PopulateRecursively,
+		"recursive",
+		false,
+		"Collect files recursively from input dir",
+	)
+	flag.BoolVar(
+		&params.NoProcessing,
+		"noProcess",
+		false,
+		"Don't process file name and structure. Creating folder with copies.",
+	)
 	flag.StringVar(
 		&params.FromLogFile,
 		"fromLogFile",
@@ -49,15 +70,15 @@ func ParseForOrginizing() *Orginize {
 
 	flag.Parse()
 
-  args := flag.Args()
+	args := flag.Args()
 
-  if len(args) == 0 {
-    log.Fatal("Provide path to the directory with media")
-  }
+	if len(args) == 0 {
+		log.Fatal("Provide path to the directory with media")
+	}
 
-  if len(args) > 1 {
-    log.Fatal("Only one non-flag argument is supported - path to the directory with media")
-  }
+	if len(args) > 1 {
+		log.Fatal("Only one non-flag argument is supported - path to the directory with media")
+	}
 
 	params.Extensions = processExtensions(extensions)
 

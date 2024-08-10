@@ -3,6 +3,8 @@ package main
 import (
 	"mediaconvertor/internal/converter"
 	"mediaconvertor/internal/stats"
+
+	"github.com/charmbracelet/log"
 )
 
 func main() {
@@ -18,19 +20,17 @@ func main() {
 		statistics,
 		params.OutputImageDir,
 		params.OutputVideoDir,
+    params.OutputUndefiendDir,
 	)
 
-	converter.StructureOutputLayout(
-		params.ImageTargetFormat,
-		params.VideoTargetFormat,
-		params.OutputImageDir,
-		params.OutputVideoDir,
-		params.OutputStructured,
-	)
+	log.Info("Structuring output folder")
+	converter.StructureOutputLayout(params)
 
+	log.Info("Cleaning")
 	converter.CleaningUp(
 		params.OutputImageDir,
 		params.OutputVideoDir,
+    params.OutputUndefiendDir,
 	)
 
 	stats.Process(statistics)

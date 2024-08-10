@@ -111,6 +111,7 @@ func TestStatCalcPost(t *testing.T) {
 		&stats,
 		"test", 
     "test",
+    "test",
 	)
 	if stats.PostCountImage != len(filePaths) {
 		t.Errorf("Expected %d, got %d", len(filePaths), stats.PostCountImage)

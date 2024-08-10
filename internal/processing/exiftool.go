@@ -2,6 +2,7 @@ package processing
 
 import (
 	"fmt"
+	"mediaconvertor/internal/parameters"
 	"os/exec"
 	"strings"
 
@@ -97,16 +98,8 @@ func processVideos(videoExt string, outputVideoDir string, outputStructuredDir s
 	structureVideos(videoExt, outputVideoDir, outputStructuredDir)
 }
 
-func PostWithExiftool(imageExt string, videoExt string, outputImageDir string, outputVideoDir string, outputStructuredDir string) {
-
-	processImages(imageExt, outputImageDir, outputStructuredDir)
-	processVideos(videoExt, outputVideoDir, outputStructuredDir)
-
-}
-
-func OrginizeWithExiftool(outputStructuredDir string) {
-  // renaming
-	dateFormat := "IMG_%Y-%m-%d_%H-%M-%S"
+func renameUndefiend(outputUndefiendDir string) {
+	dateFormat := "%Y-%m-%d_%H-%M-%S"
 	dateTags := []string{
 		"FileModifyDate",
 		"CreateDate",
@@ -116,13 +109,65 @@ func OrginizeWithExiftool(outputStructuredDir string) {
 		RunExiftool(
 			fmt.Sprint("-FileName<${", dateTag, "}_${ImageSize}%-c.${FileTypeExtension}"),
 			"-d", dateFormat,
-			outputStructuredDir,
+			outputUndefiendDir,
 		)
 	}
-  // structuring
-  //
-  // probably, because there is not -r recursive tag
-  // it should be okay
+}
+
+func structureUndefiend(outputUndefiendDir string, outputStructured string) {
+	directoryStructure := "%Y/%m"
+	dateTags := []string{
+		"DateCreated",
+		"CreateDate",
+		"FileModifyDate",
+	}
+	for _, dateTag := range dateTags {
+		RunExiftool(
+			fmt.Sprint("-Directory<", outputStructured, "/${", dateTag, "}"),
+			"-d", directoryStructure,
+			outputUndefiendDir,
+		)
+	}
+}
+
+func processUndefiend(outputUndefiendDir string, outputStructuredDir string) {
+  renameUndefiend(outputUndefiendDir)
+  structureUndefiend(outputUndefiendDir, outputStructuredDir)
+}
+
+func PostWithExiftool(params *parameters.Parameters) {
+
+	processImages(params.ImageTargetFormat, params.OutputImageDir, params.OutputStructured)
+	processVideos(params.VideoTargetFormat, params.OutputVideoDir, params.OutputStructured)
+  processUndefiend(params.OutputUndefiendDir, params.OutputStructured)
+}
+
+func OrginizeWithExiftool(
+	outputStructuredDir string,
+	saveFileName bool,
+) {
+	// renaming
+	if !saveFileName {
+    log.Info("Renaming files")
+		dateFormat := "IMG_%Y-%m-%d_%H-%M-%S"
+		dateTags := []string{
+			"FileModifyDate",
+			"CreateDate",
+			"DateCreated",
+		}
+		for _, dateTag := range dateTags {
+			RunExiftool(
+				fmt.Sprint("-FileName<${", dateTag, "}_${ImageSize}%-c.${FileTypeExtension}"),
+				"-d", dateFormat,
+				outputStructuredDir,
+			)
+		}
+	}
+	// structuring
+	//
+	// probably, because there is not -r recursive tag
+	// it should be okay
+  log.Info("Structuring files")
 	directoryStructure := "%Y/%m"
 	dateTagsForStructuring := []string{
 		"DateCreated",

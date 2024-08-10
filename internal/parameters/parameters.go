@@ -13,6 +13,7 @@ type Parameters struct {
 	InputDir           string
 	OutputVideoDir     string
 	OutputImageDir     string
+	OutputUndefiendDir string
 	OutputStructured   string
 	Extensions         []string
 	VideoMinDimension  int
@@ -89,7 +90,7 @@ func Parse() *Parameters {
 		"logFilePath",
 		"",
 		"Path to the log file for recording processing details",
-	) 
+	)
 
 	flag.Parse()
 
@@ -101,6 +102,7 @@ func Parse() *Parameters {
 
 	params.OutputVideoDir = path.Join(params.InputDir, "mov")
 	params.OutputImageDir = path.Join(params.InputDir, "img")
+	params.OutputUndefiendDir = path.Join(params.InputDir, "undef")
 	params.OutputStructured = path.Join(params.InputDir, "structured")
 
 	return &params
@@ -165,6 +167,11 @@ func Check(params *Parameters) {
 		params.OutputVideoDir,
 		params.OverrideOutputDir,
 		"Output video",
+	)
+	utils.CheckAndClearDir(
+		params.OutputUndefiendDir,
+		params.OverrideOutputDir,
+		"Output undefiend",
 	)
 	utils.CheckAndClearDir(
 		params.OutputStructured,

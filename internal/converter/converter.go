@@ -6,8 +6,6 @@ import (
 	"mediaconvertor/internal/processing"
 	"mediaconvertor/internal/stats"
 	"mediaconvertor/internal/utils"
-
-	"github.com/charmbracelet/log"
 )
 
 func SetUpFiles(params *parameters.Parameters) (*stats.Stats, *filebucket.FileBucket) {
@@ -41,25 +39,16 @@ func Run(statistics *stats.Stats, params *parameters.Parameters, fileBucket *fil
 	return
 }
 
-func StructureOutputLayout(
-	imageExt string,
-	videoExt string,
-	outputImageDir string,
-	outputVideoDir string,
-	outputStructuredDir string,
-) {
-	log.Info("Structuring output folder")
-	processing.PostWithExiftool(
-		imageExt,
-		videoExt,
-		outputImageDir,
-		outputVideoDir,
-		outputStructuredDir,
-	)
+func StructureOutputLayout(params *parameters.Parameters) {
+	processing.PostWithExiftool(params)
 }
 
-func CleaningUp(outputImageDir string, outputVideoDir string) {
-  log.Info("Cleaning")
-  utils.RemoveEmptyDir(outputImageDir)
-  utils.RemoveEmptyDir(outputVideoDir)
+func CleaningUp(
+	outputImageDir string,
+	outputVideoDir string,
+	outputUndefiendDir string,
+) {
+	utils.RemoveEmptyDir(outputImageDir)
+	utils.RemoveEmptyDir(outputVideoDir)
+	utils.RemoveEmptyDir(outputUndefiendDir)
 }

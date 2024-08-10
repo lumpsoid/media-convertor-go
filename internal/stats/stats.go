@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"fmt"
 	"time"
 
 	"mediaconvertor/internal/filebucket"
@@ -11,11 +10,13 @@ import (
 )
 
 type Stats struct {
-	PreCountImage  int
-	PreCountVideo  int
-	PostCountImage int
-	PostCountVideo int
-	StartTime      time.Time
+	PreCountImage      int
+	PreCountVideo      int
+	PreCountUndefiend  int
+	PostCountImage     int
+	PostCountVideo     int
+	PostCountUndefiend int
+	StartTime          time.Time
 }
 
 func FromFileBucket(fileBucket *filebucket.FileBucket) Stats {
@@ -27,6 +28,8 @@ func FromFileBucket(fileBucket *filebucket.FileBucket) Stats {
 			stats.PreCountImage += len(files)
 		case filebucket.Video:
 			stats.PreCountVideo += len(files)
+		case filebucket.Undefiend:
+			stats.PreCountUndefiend += len(files)
 		}
 	}
 	stats.StartTime = time.Now()
@@ -34,9 +37,10 @@ func FromFileBucket(fileBucket *filebucket.FileBucket) Stats {
 }
 
 func CountPost(
-  stats *Stats, 
-  outputImageDir string,
-  outputVideoDir string,
+	stats *Stats,
+	outputImageDir string,
+	outputVideoDir string,
+	outputUndefiendDir string,
 ) {
 	postImageFiles, err := utils.GetFilesFromDir(outputImageDir)
 	if err != nil {
@@ -46,17 +50,22 @@ func CountPost(
 	if err != nil {
 		log.Error("Can't get files from output video folder")
 	}
+	postUndefiendFiles, err := utils.GetFilesFromDir(outputUndefiendDir)
+	if err != nil {
+		log.Error("Can't get files from output undefiend folder")
+	}
 	stats.PostCountImage = len(postImageFiles)
 	stats.PostCountVideo = len(postVideoFiles)
+	stats.PostCountUndefiend = len(postUndefiendFiles)
 }
 
 func CountFilesRecursive(dirPath string) int {
-  counter, err := utils.CountFiles(dirPath)
-  if err != nil {
-    log.Errorf("Error while counting files: %v", err)
-    return 0
-  }
-  return counter
+	counter, err := utils.CountFiles(dirPath)
+	if err != nil {
+		log.Errorf("Error while counting files: %v", err)
+		return 0
+	}
+	return counter
 }
 
 func calculateTimeElapsed(startTime time.Time) {
@@ -65,14 +74,12 @@ func calculateTimeElapsed(startTime time.Time) {
 }
 
 func Process(stats *Stats) {
-	preCount := stats.PreCountImage + stats.PreCountVideo
-	postCount := stats.PostCountImage + stats.PostCountVideo
+	preCount := stats.PreCountImage + stats.PreCountVideo + stats.PreCountUndefiend
+	postCount := stats.PostCountImage + stats.PostCountVideo + stats.PreCountUndefiend
 
-	fmt.Printf("Pre-count: %d\n", preCount)
-	fmt.Printf("Post-count: %d\n", postCount)
+  log.Info("Pre-count: ", preCount, "Post-count: ", postCount)
 	if preCount == postCount {
-		fmt.Print("Pre-count == Post-count\n")
+    log.Info("Pre-count == Post-count")
 	}
 	calculateTimeElapsed(stats.StartTime)
 }
-

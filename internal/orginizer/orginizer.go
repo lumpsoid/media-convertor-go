@@ -14,9 +14,17 @@ func SetUpFiles(params *parameters.Orginize) (*stats.Stats, *filebucket.FileBuck
 		stats := stats.FromFileBucket(fileBucket)
 		return &stats, fileBucket
 	}
+
 	fileBucket := filebucket.FileBucketFromExtensions(params.Extensions)
-	filebucket.PopulateFileBucket(fileBucket, params.InputDir)
+
+	if params.PopulateRecursively {
+		filebucket.PopulateFileBuketRecursive(fileBucket, params.InputDir)
+	} else {
+		filebucket.PopulateFileBucket(fileBucket, params.InputDir)
+	}
+
 	stats := stats.FromFileBucket(fileBucket)
+
 	return &stats, fileBucket
 }
 
@@ -34,11 +42,12 @@ func CopyFiles(
 	fileBucket *filebucket.FileBucket,
 	statistics *stats.Stats,
 	outputStructured string,
+	saveFileName bool,
 ) {
-	processing.CopyFiles(fileBucket, statistics, outputStructured)
+	processing.CopyFiles(fileBucket, statistics, outputStructured, saveFileName)
 	return
 }
 
-func StructureOutputLayout(outputStructuredDir string) {
-	processing.OrginizeWithExiftool(outputStructuredDir)
+func StructureOutputLayout(outputStructuredDir string, saveFileName bool) {
+	processing.OrginizeWithExiftool(outputStructuredDir, saveFileName)
 }

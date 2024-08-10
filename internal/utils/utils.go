@@ -30,6 +30,10 @@ func CheckProgramAvailability(program string) {
 	}
 }
 
+func GetFileExtension(filePath string) string {
+	return strings.ToLower(strings.TrimLeft(filepath.Ext(filePath), "."))
+}
+
 func GetModificationTime(filePath string) (time.Time, error) {
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
@@ -275,7 +279,7 @@ func RemoveEmptyDir(dirPath string) {
 	err = os.Remove(dirPath)
 	if err != nil {
 		log.Errorf("Can't delete dir: %s. Error: %s", dirPath, err)
-    return
+		return
 	}
 }
 

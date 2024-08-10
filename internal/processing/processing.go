@@ -6,6 +6,7 @@ import (
 	"mediaconvertor/internal/parameters"
 	"mediaconvertor/internal/stats"
 	"mediaconvertor/internal/utils"
+	"path/filepath"
 
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
@@ -19,7 +20,7 @@ func Files(
 	log.Info("Starting processing files")
 
 	counterLoop := 0
-	counterMax := stats.PreCountImage + stats.PreCountVideo
+	counterMax := stats.PreCountImage + stats.PreCountVideo + stats.PreCountUndefiend
 
 	for ext, files := range fileBucket.Files {
 		var errInLoop error
@@ -36,6 +37,18 @@ func Files(
 				counterLoop++
 				fmt.Printf("\r%d/%d", counterLoop, counterMax)
 				errInLoop = processVideo(params, filePath)
+			}
+		case filebucket.Undefiend:
+			for _, filePath := range files {
+				counterLoop++
+				fmt.Printf("\r%d/%d", counterLoop, counterMax)
+        extNew := utils.GetFileExtension(filePath)
+				outputFilePath := utils.GenOutputPath(
+					params.OutputUndefiendDir,
+					uuid.NewString(),
+          extNew,
+				)
+				utils.CopyFile(filePath, outputFilePath)
 			}
 		}
 		if errInLoop != nil {
@@ -60,20 +73,32 @@ func CopyFiles(
 	fileBucket *filebucket.FileBucket,
 	stats *stats.Stats,
 	outputStructured string,
+	saveFileName bool,
 ) {
 
 	counterLoop := 0
-	counterMax := stats.PreCountImage + stats.PreCountVideo
+	counterMax := stats.PreCountImage + stats.PreCountVideo + stats.PreCountUndefiend
 
 	for ext, files := range fileBucket.Files {
 		for _, filePath := range files {
 			counterLoop++
 			fmt.Printf("\r%d/%d", counterLoop, counterMax)
-			outputPath := utils.GenOutputPath(
-				outputStructured,
-				uuid.NewString(),
-				ext,
-			)
+
+			var outputPath string
+			if saveFileName {
+				baseName := filepath.Base(filePath)
+				//ext := filepath.Ext(baseName)
+				// Remove the extension from the base name
+				//nameWithoutExt := baseName[:len(baseName)-len(ext)]
+				outputPath = filepath.Join(outputStructured, baseName)
+			} else {
+				outputPath = utils.GenOutputPath(
+					outputStructured,
+					uuid.NewString(),
+					ext,
+				)
+			}
+
 			utils.CopyFile(filePath, outputPath)
 		}
 	}
